@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dorm Reservation</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "IBM Plex Sans KR", sans-serif;
+        }
+
+        :root {
+            --primary: #4e73df;
+            --primary-dark: #2e59d9;
+            --primary-light: #eef2ff;
+            --secondary: #858796;
+            --success: #1cc88a;
+            --info: #36b9cc;
+            --warning: #f6c23e;
+            --danger: #e74a3b;
+            --light: #f8f9fc;
+            --dark: #5a5c69;
+            --shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+
+        body {
+            font-family: "IBM Plex Sans KR", sans-serif;
+            background: var(--light);
+            min-height: 100vh;
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--primary-dark);
+            color: white;
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 23px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-logo {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2rem;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .student-info i {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .menu-button {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .page-wrapper {
+            display: flex;
+            min-height: calc(100vh - 60px);
+            margin-top: 60px;
+        }
+
+        .main-container {
+            flex-grow: 1;
+            padding: 20px;
+            background: var(--light);
+        }
+
+        /* 카드 스타일 */
+        .card-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Seminar room specific styles */
+        .reservation-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .reservation-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .room-status {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        .form-group input[type="text"],
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* NEW: Side-by-side layout for seminar and lounge selection */
+        .selection-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .selection-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .selection-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        .selection-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .time-selection {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .time-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-secondary {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* FIXED: Changed from 3 columns to 2 columns to make lounges fill the space */
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .room-card {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .room-card h3 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .time-slot {
+            background: #e9ecef;
+            margin: 0.25rem 0;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .notice-box {
+            background: #fff3cd;
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            margin-top: 2rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .notice-title {
+            display: flex;
+            align-items: center;
+            color: #856404;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .notice-title i {
+            margin-right: 0.5rem;
+        }
+
+        .notice-content {
+            color: #856404;
+            font-size: 0.95rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--secondary);
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 89;
+        }
+
+        /* 반응형 스타일 */
+        @media (max-width: 992px) {
+            .room-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .menu-button {
+                display: block;
+            }
+
+            .main-container {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .reservation-container {
+                grid-template-columns: 1fr;
+            }
+
+            /* Stack seminar and lounge selections vertically on mobile */
+            .selection-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .overlay.active {
+                display: block;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .room-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+    
+    <header class="header">
+        <h1>
+            <button class="menu-button" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </h1>
+        <div class="student-info">
+            <i class="fas fa-user"></i>
+            <span>{{student_id}}</span>
+        </div>
+    </header>
+
+    <div class="page-wrapper">
+        <main class="main-container">
+            <div class="card-container">
+                <div class="reservation-container">
+                    <div class="reservation-form">
+                        <h2 style="margin-bottom: 1.5rem; color: var(--primary);">라운지 신청</h2>
+                        <form id="reservation-form">
+                            <div class="form-group">
+                                <label for="student-name">학생 이름</label>
+                                <input type="text" id="student1" placeholder="대표자 학번 이름 입력">
+                                <input type="text" name="student2" placeholder="학번 이름 입력">
+                                <input type="text" name="student3" placeholder="학번 이름 입력">
+                                <input type="text" name="student4" placeholder="학번 이름 입력">
+                                <input type="text" name="student5" placeholder="학번 이름 입력">
+                                <input type="text" name="student6" placeholder="학번 이름 입력">
+                            </div>
+
+                            <!-- Modified: Full width layout for lounge selection -->
+                            <div class="form-group">
+                                <label for="lounge-room">라운지 신청</label>
+                                <select id="lounge-room">
+                                    <option value="1">A동 라운지</option>
+                                    <option value="2">G동 라운지</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="time-slot">신청 시간</label>
+                                <select id="time-slot">
+                                    <option value="1">17시</option>
+                                    <option value="2">17시 30분</option>
+                                    <option value="3">18시</option>
+                                    <option value="4">18시 30분</option>
+                                    <option value="5">19시</option>
+                                    <option value="6">19시 30분</option>
+                                    <option value="7">20시</option>
+                                    <option value="8">20시 30분</option>
+                                    <option value="9">21시</option>
+                                    <option value="10">21시 30분</option>
+                                    <option value="11">22시</option>
+                                    <option value="12">22시 30분</option>
+                                    <option value="13">23시</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" id="reserve">신청</button>
+                            <button type="button" class="btn btn-secondary" id="cancel">취소</button>
+                        </form>
+                    </div>
+
+                    <div class="room-status">
+                        <h2 style="margin-bottom: 1.5rem; color: var(--primary);">라운지 현황</h2>
+                        
+                        <!-- 공지사항 박스 -->
+                        <div class="notice-box">
+                            <div class="notice-title">
+                                <i class="fas fa-exclamation-circle"></i>
+                                라운지 신청 공지사항
+                            </div>
+                            <div class="notice-content">
+                                <p>※ 라운지 신청은 30분 단위로 신청 가능합니다.</p>
+                                <p>※ 11시 이후에는 신청이 마감되오니 유의하시기 바랍니다.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="room-grid" style="margin-top: 2rem;">
+                            <!-- Room cards -->
+                            <div class="room-card">
+                                <h3>A동 라운지</h3>
+                                <div id="room-1-1" class="time-slot">17:00</div>
+                                <div id="room-1-2" class="time-slot">17:30</div>
+                                <div id="room-1-3" class="time-slot">18:00</div>
+                                <div id="room-1-4" class="time-slot">18:30</div>
+                                <div id="room-1-5" class="time-slot">19:00</div>
+                                <div id="room-1-6" class="time-slot">19:30</div>
+                                <div id="room-1-7" class="time-slot">20:00</div>
+                                <div id="room-1-8" class="time-slot">20:30</div>
+                                <div id="room-1-9" class="time-slot">21:00</div>
+                                <div id="room-1-10" class="time-slot">21:30</div>
+                                <div id="room-1-11" class="time-slot">22:00</div>
+                                <div id="room-1-12" class="time-slot">22:30</div>
+                                <div id="room-1-13" class="time-slot">23:00</div>
+                            </div>
+                            <div class="room-card">
+                                <h3>G동 라운지</h3>
+                                <div id="room-2-1" class="time-slot">17:00</div>
+                                <div id="room-2-2" class="time-slot">17:30</div>
+                                <div id="room-2-3" class="time-slot">18:00</div>
+                                <div id="room-2-4" class="time-slot">18:30</div>
+                                <div id="room-2-5" class="time-slot">19:00</div>
+                                <div id="room-2-6" class="time-slot">19:30</div>
+                                <div id="room-2-7" class="time-slot">20:00</div>
+                                <div id="room-2-8" class="time-slot">20:30</div>
+                                <div id="room-2-9" class="time-slot">21:00</div>
+                                <div id="room-2-10" class="time-slot">21:30</div>
+                                <div id="room-2-11" class="time-slot">22:00</div>
+                                <div id="room-2-12" class="time-slot">22:30</div>
+                                <div id="room-2-13" class="time-slot">23:00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 사이드바 토글 기능
+        const menuToggle = document.getElementById('menuToggle');
+        const overlay = document.getElementById('overlay');
+
+        if (menuToggle && overlay) {
+            menuToggle.addEventListener('click', function() {
+                overlay.classList.toggle('active');
+            });
+
+            overlay.addEventListener('click', function() {
+                overlay.classList.remove('active');
+            });
+        }
+
+        // 화면 크기가 바뀔 때 오버레이 상태 조정
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768 && overlay) {
+                overlay.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
